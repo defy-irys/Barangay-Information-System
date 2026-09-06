@@ -73,6 +73,12 @@ export function IndigencyTemplate({ data }: TemplateProps) {
             <span className="font-semibold">O.R. Number:</span>{" "}
             {data.orNumber || "EXEMPTED"}
           </p>
+          {data.philSysCardNo && (
+            <p>
+              <span className="font-semibold">PhilSys Card No:</span>{" "}
+              <span className="font-mono">{data.philSysCardNo}</span>
+            </p>
+          )}
           <p>
             <span className="font-semibold">Fee:</span> ₱
             {Number(data.amountPaid).toFixed(2)} (Gratis)

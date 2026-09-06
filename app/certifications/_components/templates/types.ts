@@ -14,6 +14,7 @@ export interface CertificateData {
   amountPaid: number;
   dateIssued: string;
   issuingOfficer: string;
+  philSysCardNo?: string;
   civilStatus?: "Single" | "Married" | "Widowed" | "Separated";
   periodOfResidency?: string;
   businessName?: string;

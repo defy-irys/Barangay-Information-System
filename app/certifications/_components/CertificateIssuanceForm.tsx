@@ -1,7 +1,15 @@
 "use client";
 
 import React, { useState } from "react";
-import { FileCheck, Printer, X, Sparkles, CheckCircle2, ShieldCheck } from "lucide-react";
+import {
+  FileCheck,
+  Printer,
+  X,
+  Sparkles,
+  CheckCircle2,
+  ShieldCheck,
+  CreditCard,
+} from "lucide-react";
 import {
   CertificateData,
   CertificateType,
@@ -13,9 +21,13 @@ import {
 
 interface FormProps {
   onIssueSuccess?: (data: CertificateData) => void;
+  actingRole?: string;
 }
 
-export function CertificateIssuanceForm({ onIssueSuccess }: FormProps) {
+export function CertificateIssuanceForm({
+  onIssueSuccess,
+  actingRole,
+}: FormProps) {
   const [formData, setFormData] = useState<CertificateData>({
     controlNumber: "BCIS-2026-1050",
     residentName: "",
@@ -25,7 +37,11 @@ export function CertificateIssuanceForm({ onIssueSuccess }: FormProps) {
     orNumber: "OR-894-101",
     amountPaid: 50.0,
     dateIssued: "2026-08-21",
-    issuingOfficer: "Sec. Maria Clara Santos",
+    issuingOfficer:
+      actingRole === "Punong Barangay"
+        ? "Hon. Punong Barangay"
+        : "Sec. Maria Clara Santos",
+    philSysCardNo: "",
     businessName: "",
     businessType: "",
     civilStatus: "Single",
@@ -35,6 +51,12 @@ export function CertificateIssuanceForm({ onIssueSuccess }: FormProps) {
   const [certified, setCertified] = useState(false);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [showSuccessToast, setShowSuccessToast] = useState(false);
+
+  const activeOfficer =
+    formData.issuingOfficer ||
+    (actingRole === "Punong Barangay"
+      ? "Hon. Punong Barangay"
+      : "Sec. Maria Clara Santos");
 
   const handleTypeChange = (type: CertificateType) => {
     let fee = 50.0;
@@ -63,8 +85,9 @@ export function CertificateIssuanceForm({ onIssueSuccess }: FormProps) {
   };
 
   const handleFinalIssue = () => {
+    const payload = { ...formData, issuingOfficer: activeOfficer };
     if (onIssueSuccess) {
-      onIssueSuccess(formData);
+      onIssueSuccess(payload);
     }
     setShowSuccessToast(true);
     setTimeout(() => setShowSuccessToast(false), 4000);
@@ -81,16 +104,17 @@ export function CertificateIssuanceForm({ onIssueSuccess }: FormProps) {
   };
 
   const renderActiveTemplate = () => {
+    const previewData = { ...formData, issuingOfficer: activeOfficer };
     switch (formData.certificateType) {
       case "Certificate of Indigency":
-        return <IndigencyTemplate data={formData} />;
+        return <IndigencyTemplate data={previewData} />;
       case "Certificate of Residency":
-        return <ResidencyTemplate data={formData} />;
+        return <ResidencyTemplate data={previewData} />;
       case "Business Permit":
-        return <BusinessPermitTemplate data={formData} />;
+        return <BusinessPermitTemplate data={previewData} />;
       case "Barangay Clearance":
       default:
-        return <BarangayClearanceTemplate data={formData} />;
+        return <BarangayClearanceTemplate data={previewData} />;
     }
   };
 
@@ -111,35 +135,41 @@ export function CertificateIssuanceForm({ onIssueSuccess }: FormProps) {
         </div>
       )}
 
-      {/* Form B2 Container */}
+      {/* Main Issuance Form Card */}
       <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
         <div className="flex items-center justify-between pb-4 border-b border-slate-200 mb-6">
           <div>
             <div className="flex items-center gap-2">
-              <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-[#580011] bg-rose-50 px-2.5 py-0.5 rounded border border-rose-200">
-                BIMS Form B2: Issuance Management (Certifications)
+              <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-[#580011] bg-rose-50 px-2 py-0.5 rounded border border-rose-200">
+                BIMS Form B2: BCIS
+              </span>
+              <span className="text-[10px] font-bold text-slate-500">
+                Barangay Certification Issuance Register
               </span>
             </div>
             <h2 className="text-base font-bold text-slate-900 mt-1">
-              Frontline Certificate & Clearance Issuance
+              Certificate & Clearance Issuance Form
             </h2>
             <p className="text-xs text-slate-500">
-              Fill out resident details and payment receipt metadata for
-              immediate document generation.
+              Enter citizen details, PhilSys card number, purpose, and official
+              receipt information pursuant to DILG MC 2025-104.
             </p>
           </div>
-          <span className="text-xs font-mono font-semibold text-slate-400 bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-200">
-            {formData.controlNumber}
-          </span>
+          <div className="text-right hidden sm:block">
+            <span className="text-xs font-mono font-bold text-slate-700 bg-slate-100 px-3 py-1.5 rounded-lg border border-slate-200">
+              Control #: {formData.controlNumber}
+            </span>
+          </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-5">
-          {/* Certificate Type Selector */}
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Certificate Type Selection Bar */}
           <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700 mb-2">
-              Select Certificate Type (Indicate Clearance / Indigency / Others)
+            <label className="block text-xs font-medium text-slate-700 mb-2">
+              Select Certificate / Clearance Type{" "}
+              <span className="text-rose-500">*</span>
             </label>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2.5">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
               {(
                 [
                   "Barangay Clearance",
@@ -154,7 +184,7 @@ export function CertificateIssuanceForm({ onIssueSuccess }: FormProps) {
                     key={type}
                     type="button"
                     onClick={() => handleTypeChange(type)}
-                    className={`px-3 py-2.5 text-xs font-medium rounded-lg border text-left transition-all cursor-pointer ${
+                    className={`p-3 text-xs font-medium rounded-lg border text-left transition-all cursor-pointer ${
                       isSelected
                         ? "bg-[#580011] text-white border-[#580011] shadow-xs"
                         : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50"
@@ -174,13 +204,17 @@ export function CertificateIssuanceForm({ onIssueSuccess }: FormProps) {
             </div>
           </div>
 
-          {/* Applicant & Address Details (Memo Top Section) */}
+          {/* Applicant & PhilSys Details (DILG MC 2025-104 Spec) */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-medium text-slate-700 mb-1">
+              <label
+                htmlFor="b2-resident-name"
+                className="block text-xs font-medium text-slate-700 mb-1"
+              >
                 Applicant Full Name <span className="text-rose-500">*</span>
               </label>
               <input
+                id="b2-resident-name"
                 type="text"
                 required
                 value={formData.residentName}
@@ -193,10 +227,43 @@ export function CertificateIssuanceForm({ onIssueSuccess }: FormProps) {
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-slate-700 mb-1">
-                Complete Address / Purok <span className="text-rose-500">*</span>
+              <label
+                htmlFor="b2-philsys-no"
+                className="block text-xs font-medium text-slate-700 mb-1 flex items-center justify-between"
+              >
+                <span className="flex items-center gap-1.5">
+                  <CreditCard className="h-3.5 w-3.5 text-[#580011]" />
+                  PhilSys Card No. (National ID)
+                </span>
+                <span className="text-[10px] text-slate-400 font-mono">
+                  XXXX-XXXX-XXXX-XXXX
+                </span>
               </label>
               <input
+                id="b2-philsys-no"
+                type="text"
+                maxLength={19}
+                value={formData.philSysCardNo || ""}
+                onChange={(e) => {
+                  const raw = e.target.value.replace(/\D/g, "").slice(0, 16);
+                  const formatted = raw.match(/.{1,4}/g)?.join("-") || raw;
+                  setFormData({ ...formData, philSysCardNo: formatted });
+                }}
+                placeholder="1234-5678-9012-3456"
+                className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-xs font-mono focus:outline-none focus:ring-1 focus:ring-[#580011] focus:border-[#580011]"
+              />
+            </div>
+
+            <div className="md:col-span-2">
+              <label
+                htmlFor="b2-address"
+                className="block text-xs font-medium text-slate-700 mb-1"
+              >
+                Complete Address / Purok{" "}
+                <span className="text-rose-500">*</span>
+              </label>
+              <input
+                id="b2-address"
                 type="text"
                 required
                 value={formData.address}
@@ -213,10 +280,14 @@ export function CertificateIssuanceForm({ onIssueSuccess }: FormProps) {
           {formData.certificateType === "Business Permit" && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-3.5 bg-amber-50/50 rounded-lg border border-amber-200/60">
               <div>
-                <label className="block text-xs font-medium text-slate-700 mb-1">
+                <label
+                  htmlFor="b2-business-name"
+                  className="block text-xs font-medium text-slate-700 mb-1"
+                >
                   Registered Business Name
                 </label>
                 <input
+                  id="b2-business-name"
                   type="text"
                   value={formData.businessName || ""}
                   onChange={(e) =>
@@ -227,10 +298,14 @@ export function CertificateIssuanceForm({ onIssueSuccess }: FormProps) {
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-slate-700 mb-1">
+                <label
+                  htmlFor="b2-business-type"
+                  className="block text-xs font-medium text-slate-700 mb-1"
+                >
                   Line of Business / Nature
                 </label>
                 <input
+                  id="b2-business-type"
                   type="text"
                   value={formData.businessType || ""}
                   onChange={(e) =>
@@ -246,10 +321,15 @@ export function CertificateIssuanceForm({ onIssueSuccess }: FormProps) {
           {/* Issued Date & Purpose (Memo Fields) */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
-              <label className="block text-xs font-medium text-slate-700 mb-1">
-                Issued Date (YYYY-MM-DD) <span className="text-rose-500">*</span>
+              <label
+                htmlFor="b2-date-issued"
+                className="block text-xs font-medium text-slate-700 mb-1"
+              >
+                Issued Date (YYYY-MM-DD){" "}
+                <span className="text-rose-500">*</span>
               </label>
               <input
+                id="b2-date-issued"
                 type="date"
                 required
                 value={formData.dateIssued}
@@ -264,10 +344,14 @@ export function CertificateIssuanceForm({ onIssueSuccess }: FormProps) {
             </div>
 
             <div className="md:col-span-2">
-              <label className="block text-xs font-medium text-slate-700 mb-1">
+              <label
+                htmlFor="b2-purpose"
+                className="block text-xs font-medium text-slate-700 mb-1"
+              >
                 Purpose <span className="text-rose-500">*</span>
               </label>
               <input
+                id="b2-purpose"
                 type="text"
                 required
                 value={formData.purpose}
@@ -286,10 +370,15 @@ export function CertificateIssuanceForm({ onIssueSuccess }: FormProps) {
           {/* Official Receipt & Fee Paid (Optional in Memo) */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2 border-t border-slate-100">
             <div>
-              <label className="block text-xs font-medium text-slate-700 mb-1">
-                OR Number <span className="text-slate-400 font-normal">(Optional)</span>
+              <label
+                htmlFor="b2-or-number"
+                className="block text-xs font-medium text-slate-700 mb-1"
+              >
+                OR Number{" "}
+                <span className="text-slate-400 font-normal">(Optional)</span>
               </label>
               <input
+                id="b2-or-number"
                 type="text"
                 value={formData.orNumber}
                 onChange={(e) =>
@@ -304,10 +393,15 @@ export function CertificateIssuanceForm({ onIssueSuccess }: FormProps) {
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-slate-700 mb-1">
-                Amount Paid (₱) <span className="text-slate-400 font-normal">(Optional)</span>
+              <label
+                htmlFor="b2-amount-paid"
+                className="block text-xs font-medium text-slate-700 mb-1"
+              >
+                Amount Paid (₱){" "}
+                <span className="text-slate-400 font-normal">(Optional)</span>
               </label>
               <input
+                id="b2-amount-paid"
                 type="number"
                 step="0.50"
                 value={formData.amountPaid}
@@ -325,19 +419,23 @@ export function CertificateIssuanceForm({ onIssueSuccess }: FormProps) {
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-slate-700 mb-1">
+              <label
+                htmlFor="b2-issuing-officer"
+                className="block text-xs font-medium text-slate-700 mb-1"
+              >
                 Issuing Officer
               </label>
               <input
+                id="b2-issuing-officer"
                 type="text"
-                value={formData.issuingOfficer}
+                value={activeOfficer}
                 onChange={(e) =>
                   setFormData({ ...formData, issuingOfficer: e.target.value })
                 }
                 className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-[#580011]"
               />
               <p className="text-[10px] text-slate-400 mt-1">
-                Barangay desk officer in-charge.
+                Authorized Barangay official in-charge.
               </p>
             </div>
           </div>
@@ -359,16 +457,18 @@ export function CertificateIssuanceForm({ onIssueSuccess }: FormProps) {
               >
                 <span className="font-bold text-[#580011] flex items-center gap-1.5 mb-1">
                   <ShieldCheck className="h-3.5 w-3.5 text-[#e5a623]" />
-                  Statutory Certification & LGUSS-BIMS Data Consent (Sec. 394(d)(6)):
+                  Statutory Certification & LGUSS-BIMS Data Consent (Sec.
+                  394(d)(6)):
                 </span>
-                I hereby certify that the above information are true and correct to the
-                best of my knowledge. I understand that for the Barangay to carry out its
-                mandate pursuant to Section 394 (d)(6) of the Local Government Code of 1991,
-                they must necessarily process my personal information for easy identification
-                of inhabitants, as a tool in planning, and as an updated reference in the number
-                of inhabitants of the Barangay. Therefore, I grant my consent that my data will
-                be stored in the LGUSS-BIMS which is a highly secured tool that is being used by
-                the barangay.
+                I hereby certify that the above information are true and correct
+                to the best of my knowledge. I understand that for the Barangay
+                to carry out its mandate pursuant to Section 394 (d)(6) of the
+                Local Government Code of 1991, they must necessarily process my
+                personal information for easy identification of inhabitants, as
+                a tool in planning, and as an updated reference in the number of
+                inhabitants of the Barangay. Therefore, I grant my consent that
+                my data will be stored in the LGUSS-BIMS which is a highly
+                secured tool that is being used by the barangay.
               </label>
             </div>
           </div>
@@ -378,10 +478,12 @@ export function CertificateIssuanceForm({ onIssueSuccess }: FormProps) {
             <button
               type="button"
               onClick={() => {
+                const randomId = `BCIS-2026-${Date.now().toString().slice(-4)}`;
                 setFormData((prev) => ({
                   ...prev,
-                  controlNumber: `BCIS-2026-${Math.floor(1000 + Math.random() * 9000)}`,
+                  controlNumber: randomId,
                   residentName: "",
+                  philSysCardNo: "",
                   purpose: "Employment Requirement",
                 }));
                 setCertified(false);

@@ -2,13 +2,16 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { FileText, ArrowLeft, Plus, History } from "lucide-react";
+import { FileText, ArrowLeft, Plus, History, Shield } from "lucide-react";
 import { CertificateIssuanceForm } from "./_components/CertificateIssuanceForm";
 import { ClearanceQueueTable } from "./_components/ClearanceQueueTable";
 import { CertificateData } from "./_components/templates";
 
 export default function CertificationsPage() {
   const [activeTab, setActiveTab] = useState<"issue" | "queue">("issue");
+  const [actingRole, setActingRole] = useState<
+    "Barangay Secretary" | "Punong Barangay"
+  >("Barangay Secretary");
   const [records, setRecords] = useState<CertificateData[]>([
     {
       controlNumber: "BCIS-2026-1049",
@@ -16,6 +19,7 @@ export default function CertificationsPage() {
       address: "Purok 2, Lot 14, Sta. Lucia",
       purpose: "PNP Police Clearance Requirement",
       certificateType: "Barangay Clearance",
+      philSysCardNo: "1092-4829-1928-3019",
       orNumber: "OR-892-019",
       amountPaid: 50.0,
       dateIssued: "2026-08-20",
@@ -27,6 +31,7 @@ export default function CertificationsPage() {
       address: "Block 8, San Jose Compound, Sta. Lucia",
       purpose: "Financial Aid (DSWD AICS)",
       certificateType: "Certificate of Indigency",
+      philSysCardNo: "2049-5839-2918-4910",
       orNumber: "EXEMPTED",
       amountPaid: 0.0,
       dateIssued: "2026-08-20",
@@ -38,6 +43,7 @@ export default function CertificationsPage() {
       address: "Purok 5, Sta. Lucia",
       purpose: "Passport Application (DFA)",
       certificateType: "Certificate of Residency",
+      philSysCardNo: "3920-1928-4920-5819",
       orNumber: "OR-892-015",
       amountPaid: 50.0,
       dateIssued: "2026-08-19",
@@ -91,21 +97,45 @@ export default function CertificationsPage() {
                   Certificates & Clearances (BCIS)
                 </h1>
                 <span className="text-[10px] font-mono font-bold bg-[#580011] text-white px-2 py-0.5 rounded">
-                  BCIS v2.5
+                  BIMS Form B2
                 </span>
               </div>
               <p className="text-xs text-slate-500">
                 Automated issuance of Barangay Clearance, Certificate of
-                Indigency, and Business Permits.
+                Indigency, and Business Permits pursuant to DILG MC 2025-104.
               </p>
             </div>
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        {/* RBAC Session Role Indicator & Primary Action */}
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-lg text-xs">
+            <Shield className="h-3.5 w-3.5 text-[#580011]" />
+            <label
+              htmlFor="bcis-role-select"
+              className="text-slate-500 font-medium"
+            >
+              Role:
+            </label>
+            <select
+              id="bcis-role-select"
+              value={actingRole}
+              onChange={(e) =>
+                setActingRole(
+                  e.target.value as "Barangay Secretary" | "Punong Barangay",
+                )
+              }
+              className="bg-transparent font-semibold text-[#580011] focus:outline-none cursor-pointer"
+            >
+              <option value="Barangay Secretary">Barangay Secretary</option>
+              <option value="Punong Barangay">Punong Barangay</option>
+            </select>
+          </div>
+
           <button
             onClick={() => setActiveTab("issue")}
-            className="px-3.5 py-2 rounded-lg bg-[#580011] hover:bg-[#3d000c] text-white text-xs font-semibold shadow-xs transition-colors flex items-center gap-1.5"
+            className="px-3.5 py-2 rounded-lg bg-[#580011] hover:bg-[#3d000c] text-white text-xs font-semibold shadow-xs transition-colors flex items-center gap-1.5 cursor-pointer"
           >
             <Plus className="h-4 w-4 text-[#e5a623]" /> Issue Certificate
           </button>
@@ -116,7 +146,7 @@ export default function CertificationsPage() {
       <div className="flex items-center gap-2 border-b border-slate-200 pb-2">
         <button
           onClick={() => setActiveTab("issue")}
-          className={`px-4 py-2 text-xs font-semibold rounded-lg transition-colors flex items-center gap-2 ${
+          className={`px-4 py-2 text-xs font-semibold rounded-lg transition-colors flex items-center gap-2 cursor-pointer ${
             activeTab === "issue"
               ? "bg-[#580011] text-white"
               : "bg-white text-slate-600 hover:bg-slate-100 border border-slate-200"
@@ -127,7 +157,7 @@ export default function CertificationsPage() {
         </button>
         <button
           onClick={() => setActiveTab("queue")}
-          className={`px-4 py-2 text-xs font-semibold rounded-lg transition-colors flex items-center gap-2 ${
+          className={`px-4 py-2 text-xs font-semibold rounded-lg transition-colors flex items-center gap-2 cursor-pointer ${
             activeTab === "queue"
               ? "bg-[#580011] text-white"
               : "bg-white text-slate-600 hover:bg-slate-100 border border-slate-200"
@@ -141,7 +171,10 @@ export default function CertificationsPage() {
       {/* Tab Viewport */}
       <div>
         {activeTab === "issue" ? (
-          <CertificateIssuanceForm onIssueSuccess={handleCertificateIssued} />
+          <CertificateIssuanceForm
+            actingRole={actingRole}
+            onIssueSuccess={handleCertificateIssued}
+          />
         ) : (
           <ClearanceQueueTable initialRecords={records} />
         )}
