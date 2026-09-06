@@ -11,6 +11,8 @@ import {
   Calendar,
   Scale,
   Lock,
+  HeartHandshake,
+  Shield,
 } from "lucide-react";
 import {
   BlotterIntakeForm,
@@ -21,11 +23,19 @@ import { CaseTrackingTable } from "./_components/CaseTrackingTable";
 import { SummonsScheduler } from "./_components/SummonsScheduler";
 import { ActionTakenForm } from "./_components/ActionTakenForm";
 import { VawcIntakeForm } from "./_components/VawcIntakeForm";
+import { CitizenFeedbackRating } from "./_components/CitizenFeedbackRating";
 
 export default function HelpdeskBlotterPage() {
   const [activeTab, setActiveTab] = useState<
-    "intake" | "case" | "tracking" | "summons" | "action" | "vawc"
+    "intake" | "case" | "tracking" | "summons" | "action" | "vawc" | "feedback"
   >("intake");
+
+  const [actingRole, setActingRole] = useState<
+    | "Barangay Secretary"
+    | "Punong Barangay"
+    | "Lupon Secretary"
+    | "VAW Desk Officer"
+  >("Barangay Secretary");
 
   const [cases, setCases] = useState<BlotterCaseData[]>([
     {
@@ -100,7 +110,7 @@ export default function HelpdeskBlotterPage() {
             </Link>
             <span>/</span>
             <span className="font-semibold text-slate-700">
-              Helpdesk & Complaints
+              Helpdesk & Blotter
             </span>
           </div>
           <div className="flex items-center gap-3">
@@ -110,21 +120,51 @@ export default function HelpdeskBlotterPage() {
             <div>
               <div className="flex items-center gap-2">
                 <h1 className="text-xl font-bold text-slate-900 tracking-tight">
-                  Helpdesk & Complaints (KPISBH)
+                  Helpdesk & Complaints Register (KPISBH)
                 </h1>
                 <span className="text-[10px] font-mono font-bold bg-[#580011] text-white px-2 py-0.5 rounded">
-                  KPISBH v2.5
+                  BIMS Form C & D
                 </span>
               </div>
               <p className="text-xs text-slate-500">
-                Katarungang Pambarangay incident logging, case particulars,
-                blotter scheduling, & mediation management.
+                Katarungang Pambarangay mediation, incident blotter, VAWC
+                intake, and citizen response feedback per DILG MC 2025-104.
               </p>
             </div>
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        {/* RBAC Role Selector & Primary Action */}
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-lg text-xs">
+            <Shield className="h-3.5 w-3.5 text-[#580011]" />
+            <label
+              htmlFor="kpisbh-role-select"
+              className="text-slate-500 font-medium"
+            >
+              Role:
+            </label>
+            <select
+              id="kpisbh-role-select"
+              value={actingRole}
+              onChange={(e) =>
+                setActingRole(
+                  e.target.value as
+                    | "Barangay Secretary"
+                    | "Punong Barangay"
+                    | "Lupon Secretary"
+                    | "VAW Desk Officer",
+                )
+              }
+              className="bg-transparent font-semibold text-[#580011] focus:outline-none cursor-pointer"
+            >
+              <option value="Barangay Secretary">Barangay Secretary</option>
+              <option value="Punong Barangay">Punong Barangay</option>
+              <option value="Lupon Secretary">Lupon Secretary</option>
+              <option value="VAW Desk Officer">VAW Desk Officer</option>
+            </select>
+          </div>
+
           <button
             onClick={() => setActiveTab("intake")}
             className="px-3.5 py-2 rounded-lg bg-[#580011] hover:bg-[#3d000c] text-white text-xs font-semibold shadow-xs transition-colors flex items-center gap-1.5 cursor-pointer"
@@ -207,6 +247,18 @@ export default function HelpdeskBlotterPage() {
           <Lock className="h-3.5 w-3.5" />
           VAWC Desk Intake (Form D1)
         </button>
+
+        <button
+          onClick={() => setActiveTab("feedback")}
+          className={`px-3.5 py-2 text-xs font-semibold rounded-lg transition-colors flex items-center gap-1.5 cursor-pointer ${
+            activeTab === "feedback"
+              ? "bg-[#580011] text-white shadow-xs"
+              : "bg-white text-slate-600 hover:bg-slate-100 border border-slate-200"
+          }`}
+        >
+          <HeartHandshake className="h-3.5 w-3.5" />
+          Citizen Feedback (Form C)
+        </button>
       </div>
 
       {/* Active Tab View */}
@@ -219,6 +271,7 @@ export default function HelpdeskBlotterPage() {
         {activeTab === "summons" && <SummonsScheduler />}
         {activeTab === "action" && <ActionTakenForm />}
         {activeTab === "vawc" && <VawcIntakeForm />}
+        {activeTab === "feedback" && <CitizenFeedbackRating />}
       </div>
     </div>
   );
