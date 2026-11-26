@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import Link from "next/link";
+import { signIn } from "next-auth/react";
 import {
   ArrowLeft,
   Check,
@@ -18,14 +19,86 @@ import {
   type AdminRoleId,
 } from "@/lib/auth/rbac";
 
+interface AuthCapabilities {
+  secretConfigured: boolean;
+  hostTrusted: boolean;
+  oidcConfigured: boolean;
+  oidcPartiallyConfigured: boolean;
+  credentialsEnabled: boolean;
+}
+
 export default function AdminLoginPage() {
   const [selectedRole, setSelectedRole] =
     useState<AdminRoleId>("barangay-secretary");
+  const [authCapabilities, setAuthCapabilities] =
+    useState<AuthCapabilities | null>(null);
+  const [authSetupError, setAuthSetupError] = useState<string | null>(null);
+  const [signInError, setSignInError] = useState<string | null>(null);
+  const [isSigningIn, setIsSigningIn] = useState(false);
   const profile = ADMIN_PROFILES[selectedRole];
   const accessibleModules = getAccessibleModules(selectedRole);
 
-  const preventUnconfiguredSignIn = (event: FormEvent<HTMLFormElement>) => {
+  useEffect(() => {
+    let active = true;
+
+    fetch("/api/v1/auth/capabilities", { cache: "no-store" })
+      .then(async (response) => {
+        if (!response.ok) {
+          throw new Error("Unable to load sign-in configuration.");
+        }
+
+        const result = (await response.json()) as { data: AuthCapabilities };
+        if (active) {
+          setAuthCapabilities(result.data);
+        }
+      })
+      .catch(() => {
+        if (active) {
+          setAuthSetupError(
+            "Sign-in configuration could not be loaded. Authentication remains disabled.",
+          );
+        }
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const handleCredentialSignIn = async (
+    event: FormEvent<HTMLFormElement>,
+  ) => {
     event.preventDefault();
+    if (!authCapabilities?.credentialsEnabled) {
+      return;
+    }
+
+    setIsSigningIn(true);
+    setSignInError(null);
+    const formData = new FormData(event.currentTarget);
+
+    try {
+      await signIn("credentials", {
+        email: formData.get("email"),
+        password: formData.get("password"),
+        redirectTo: "/",
+      });
+    } catch {
+      setSignInError("Sign-in failed. Check your credentials or contact an administrator.");
+      setIsSigningIn(false);
+    }
+  };
+
+  const handleOidcSignIn = async () => {
+    setIsSigningIn(true);
+    setSignInError(null);
+
+    try {
+      await signIn("barangay-oidc", { redirectTo: "/" });
+    } catch {
+      setSignInError("Organization sign-in could not be started.");
+      setIsSigningIn(false);
+    }
   };
 
   return (
@@ -65,8 +138,8 @@ export default function AdminLoginPage() {
               One trusted workspace for barangay services.
             </h1>
             <p className="mt-3 max-w-xl text-sm leading-6 text-slate-600">
-              Select a role to preview its draft access scope. Permissions
-              should be approved by the barangay before backend enforcement.
+              Preview role access scopes. Your account’s assigned role, not
+              this preview, determines what you can access.
             </p>
           </div>
 
@@ -181,15 +254,22 @@ export default function AdminLoginPage() {
             >
               <ShieldAlert className="mt-0.5 h-4 w-4 shrink-0 text-amber-700" />
               <p className="text-xs leading-5 text-amber-900">
-                Authentication is not connected yet. Sign-in is unavailable;
-                profile selection is only a preview, not an access-control
-                boundary.
+                {authSetupError ||
+                  (authCapabilities?.oidcPartiallyConfigured
+                    ? "Organization SSO configuration is incomplete. Sign-in is unavailable until all required settings are provided."
+                    : !authCapabilities?.secretConfigured
+                      ? "Authentication is not configured. Set AUTH_SECRET and configure an identity provider before enabling sign-in."
+                      : !authCapabilities.hostTrusted
+                        ? "Set AUTH_TRUST_HOST=true only after the production proxy validates and overwrites Host headers."
+                      : authCapabilities.oidcConfigured
+                        ? "Organization SSO is configured. Email/password sign-in stays disabled until the database account store is connected."
+                        : "No sign-in provider is configured. Configure OIDC or connect the database account store before enabling sign-in.")}
               </p>
             </div>
 
             <form
               className="mt-6 space-y-4"
-              onSubmit={preventUnconfiguredSignIn}
+              onSubmit={handleCredentialSignIn}
             >
               <div>
                 <label
@@ -204,6 +284,7 @@ export default function AdminLoginPage() {
                   type="email"
                   autoComplete="username"
                   placeholder="name@stalucia.gov.ph"
+                  disabled={!authCapabilities?.credentialsEnabled}
                   className="w-full rounded-lg border border-slate-300 bg-slate-50 px-3.5 py-2.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-[#580011] focus:ring-2 focus:ring-[#580011]/10"
                 />
               </div>
@@ -220,21 +301,45 @@ export default function AdminLoginPage() {
                   type="password"
                   autoComplete="current-password"
                   placeholder="Enter your password"
+                  disabled={!authCapabilities?.credentialsEnabled}
                   className="w-full rounded-lg border border-slate-300 bg-slate-50 px-3.5 py-2.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-[#580011] focus:ring-2 focus:ring-[#580011]/10"
                 />
               </div>
               <button
                 type="submit"
-                disabled
-                className="w-full cursor-not-allowed rounded-lg bg-[#580011] px-4 py-3 text-sm font-bold text-white opacity-60"
+                disabled={!authCapabilities?.credentialsEnabled || isSigningIn}
+                className="w-full rounded-lg bg-[#580011] px-4 py-3 text-sm font-bold text-white enabled:hover:bg-[#3d000c] disabled:cursor-not-allowed disabled:opacity-60"
               >
-                Sign-in setup pending
+                {isSigningIn
+                  ? "Signing in…"
+                  : authCapabilities?.credentialsEnabled
+                    ? "Sign in with email"
+                    : "Email/password setup pending"}
               </button>
             </form>
 
+            {authCapabilities?.secretConfigured &&
+              authCapabilities.hostTrusted &&
+              authCapabilities.oidcConfigured && (
+                <button
+                  type="button"
+                  onClick={handleOidcSignIn}
+                  disabled={isSigningIn}
+                  className="mt-3 w-full rounded-lg border border-slate-300 bg-white px-4 py-3 text-sm font-bold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  Continue with organization SSO
+                </button>
+              )}
+
+            {signInError && (
+              <p role="alert" className="mt-3 text-center text-xs text-red-700">
+                {signInError}
+              </p>
+            )}
+
             <p className="mt-5 text-center text-[11px] leading-5 text-slate-500">
-              No credentials are accepted or stored on this page. Connect an
-              authentication provider and account store to enable sign-in.
+              Profile selection is only a preview. Roles are assigned by the
+              trusted identity provider or account store.
             </p>
           </div>
         </section>

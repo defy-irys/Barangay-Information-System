@@ -2,9 +2,11 @@ import "server-only";
 import { ApiError } from "@/lib/backend/api-error";
 import {
   hasPermission,
+  isAdminRoleId,
   type AdminPermission,
   type AdminRoleId,
 } from "./rbac";
+import { auth } from "@/auth";
 
 export interface AuthenticatedPrincipal {
   userId: string;
@@ -24,4 +26,21 @@ export function requirePermission(
   }
 
   return principal;
+}
+
+export async function getAuthenticatedPrincipal(): Promise<AuthenticatedPrincipal | null> {
+  const session = await auth();
+  const user = session?.user;
+
+  if (!user?.id || !isAdminRoleId(user.role)) {
+    return null;
+  }
+
+  return { userId: user.id, role: user.role };
+}
+
+export async function requireCurrentPermission(
+  permission: AdminPermission,
+): Promise<AuthenticatedPrincipal> {
+  return requirePermission(await getAuthenticatedPrincipal(), permission);
 }

@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
+import { useSession } from "next-auth/react";
 import {
   ShieldAlert,
   ArrowLeft,
@@ -14,6 +15,7 @@ import {
   HeartHandshake,
   Shield,
 } from "lucide-react";
+import { ADMIN_PROFILES, hasPermission, isAdminRoleId } from "@/lib/auth/rbac";
 import {
   BlotterIntakeForm,
   BlotterCaseData,
@@ -26,16 +28,12 @@ import { VawcIntakeForm } from "./_components/VawcIntakeForm";
 import { CitizenFeedbackRating } from "./_components/CitizenFeedbackRating";
 
 export default function HelpdeskBlotterPage() {
+  const { data: session } = useSession();
   const [activeTab, setActiveTab] = useState<
     "intake" | "case" | "tracking" | "summons" | "action" | "vawc" | "feedback"
   >("intake");
-
-  const [actingRole, setActingRole] = useState<
-    | "Barangay Secretary"
-    | "Punong Barangay"
-    | "Lupon Secretary"
-    | "VAW Desk Officer"
-  >("Barangay Secretary");
+  const role = session?.user?.role;
+  const vawcAccess = isAdminRoleId(role) && hasPermission(role, "vawc:read");
 
   const [cases, setCases] = useState<BlotterCaseData[]>([
     {
@@ -134,36 +132,17 @@ export default function HelpdeskBlotterPage() {
           </div>
         </div>
 
-        {/* RBAC Role Selector & Primary Action */}
+        {/* Authenticated role and primary action */}
         <div className="flex flex-wrap items-center gap-3">
-          <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-lg text-xs">
+          {isAdminRoleId(role) && (
+            <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-lg text-xs">
             <Shield className="h-3.5 w-3.5 text-[#580011]" />
-            <label
-              htmlFor="kpisbh-role-select"
-              className="text-slate-500 font-medium"
-            >
-              Role:
-            </label>
-            <select
-              id="kpisbh-role-select"
-              value={actingRole}
-              onChange={(e) =>
-                setActingRole(
-                  e.target.value as
-                    | "Barangay Secretary"
-                    | "Punong Barangay"
-                    | "Lupon Secretary"
-                    | "VAW Desk Officer",
-                )
-              }
-              className="bg-transparent font-semibold text-[#580011] focus:outline-none cursor-pointer"
-            >
-              <option value="Barangay Secretary">Barangay Secretary</option>
-              <option value="Punong Barangay">Punong Barangay</option>
-              <option value="Lupon Secretary">Lupon Secretary</option>
-              <option value="VAW Desk Officer">VAW Desk Officer</option>
-            </select>
-          </div>
+              <span className="text-slate-500 font-medium">Role:</span>
+              <span className="font-semibold text-[#580011]">
+                {ADMIN_PROFILES[role].name}
+              </span>
+            </div>
+          )}
 
           <button
             onClick={() => setActiveTab("intake")}
@@ -236,17 +215,19 @@ export default function HelpdeskBlotterPage() {
           Action Taken / Settlement (Form C3)
         </button>
 
-        <button
-          onClick={() => setActiveTab("vawc")}
-          className={`px-3.5 py-2 text-xs font-semibold rounded-lg transition-colors flex items-center gap-1.5 cursor-pointer ${
-            activeTab === "vawc"
-              ? "bg-[#580011] text-white shadow-xs"
-              : "bg-white text-slate-600 hover:bg-slate-100 border border-slate-200"
-          }`}
-        >
-          <Lock className="h-3.5 w-3.5" />
-          VAWC Desk Intake (Form D1)
-        </button>
+        {vawcAccess && (
+          <button
+            onClick={() => setActiveTab("vawc")}
+            className={`px-3.5 py-2 text-xs font-semibold rounded-lg transition-colors flex items-center gap-1.5 cursor-pointer ${
+              activeTab === "vawc"
+                ? "bg-[#580011] text-white shadow-xs"
+                : "bg-white text-slate-600 hover:bg-slate-100 border border-slate-200"
+            }`}
+          >
+            <Lock className="h-3.5 w-3.5" />
+            VAWC Desk Intake (Form D1)
+          </button>
+        )}
 
         <button
           onClick={() => setActiveTab("feedback")}
@@ -270,7 +251,7 @@ export default function HelpdeskBlotterPage() {
         {activeTab === "tracking" && <CaseTrackingTable cases={cases} />}
         {activeTab === "summons" && <SummonsScheduler />}
         {activeTab === "action" && <ActionTakenForm />}
-        {activeTab === "vawc" && <VawcIntakeForm />}
+        {activeTab === "vawc" && vawcAccess && <VawcIntakeForm />}
         {activeTab === "feedback" && <CitizenFeedbackRating />}
       </div>
     </div>

@@ -14,8 +14,11 @@ import {
   AlertCircle, 
   PackageCheck,
   LogIn,
+  LogOut,
 } from "lucide-react";
 import Link from "next/link";
+import { signOut, useSession } from "next-auth/react";
+import { ADMIN_PROFILES, isAdminRoleId } from "@/lib/auth/rbac";
 
 interface NavbarProps {
   onToggleSidebar?: () => void;
@@ -26,6 +29,9 @@ export default function Navbar({ onToggleSidebar, isSidebarOpen }: NavbarProps) 
   const [searchQuery, setSearchQuery] = useState("");
   const [showQuickMenu, setShowQuickMenu] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
+  const { data: session } = useSession();
+  const role = session?.user?.role;
+  const profile = isAdminRoleId(role) ? ADMIN_PROFILES[role] : null;
 
   return (
     <header className="sticky top-0 z-40 w-full bg-[#580011] text-white shadow-md border-b border-[#3D000C]">
@@ -194,13 +200,32 @@ export default function Navbar({ onToggleSidebar, isSidebarOpen }: NavbarProps) 
             )}
           </div>
 
-          <Link
-            href="/login"
-            className="inline-flex items-center gap-2 rounded-lg border border-[#E5A623]/50 px-3 py-2 text-xs font-semibold text-white transition hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-[#E5A623]"
-          >
-            <LogIn className="h-4 w-4 text-[#E5A623]" />
-            <span className="hidden sm:inline">Admin sign in</span>
-          </Link>
+          {profile ? (
+            <div className="flex items-center gap-2">
+              <span className="hidden text-right sm:block">
+                <span className="block text-xs font-semibold">{profile.name}</span>
+                <span className="block text-[10px] text-rose-100/80">
+                  {session?.user?.name || "Signed-in administrator"}
+                </span>
+              </span>
+              <button
+                type="button"
+                onClick={() => signOut({ redirectTo: "/login" })}
+                className="inline-flex items-center gap-2 rounded-lg border border-[#E5A623]/50 px-3 py-2 text-xs font-semibold text-white transition hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-[#E5A623]"
+              >
+                <LogOut className="h-4 w-4 text-[#E5A623]" />
+                <span className="hidden sm:inline">Sign out</span>
+              </button>
+            </div>
+          ) : (
+            <Link
+              href="/login"
+              className="inline-flex items-center gap-2 rounded-lg border border-[#E5A623]/50 px-3 py-2 text-xs font-semibold text-white transition hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-[#E5A623]"
+            >
+              <LogIn className="h-4 w-4 text-[#E5A623]" />
+              <span className="hidden sm:inline">Admin sign in</span>
+            </Link>
+          )}
 
         </div>
 

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import ClientLayoutShell from "@/components/ClientLayoutShell";
+import { SessionProvider } from "next-auth/react";
 
 export const metadata: Metadata = {
   title: "Barangay Information System (BIS v2.5) | Barangay Sta. Lucia",
@@ -16,7 +17,9 @@ export default function RootLayout({
   return (
     <html lang="en" className="h-full antialiased">
       <body className="h-full bg-slate-50 text-slate-900 font-sans">
-        <ClientLayoutShell>{children}</ClientLayoutShell>
+        <SessionProvider>
+          <ClientLayoutShell>{children}</ClientLayoutShell>
+        </SessionProvider>
       </body>
     </html>
   );

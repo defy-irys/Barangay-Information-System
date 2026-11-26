@@ -33,6 +33,13 @@ export const ADMIN_ROLE_IDS = [
 
 export type AdminRoleId = (typeof ADMIN_ROLE_IDS)[number];
 
+export function isAdminRoleId(value: unknown): value is AdminRoleId {
+  return (
+    typeof value === "string" &&
+    (ADMIN_ROLE_IDS as readonly string[]).includes(value)
+  );
+}
+
 export interface AdminProfile {
   name: string;
   title: string;
@@ -135,6 +142,29 @@ export function hasPermission(
   permission: AdminPermission,
 ): boolean {
   return ADMIN_PROFILES[role].permissions.includes(permission);
+}
+
+const ROUTE_MODULE_ALIASES: Record<string, AdminModuleId> = {
+  "/inhabitants": "inhabitants",
+  "/bips": "inhabitants",
+  "/bcis": "certifications",
+  "/kpisbh": "helpdesk",
+  "/bams": "assets",
+  "/bgadpbms": "gad",
+};
+
+export function getModuleReadPermissionForPath(
+  pathname: string,
+): AdminPermission | null {
+  const moduleId =
+    Object.entries(ROUTE_MODULE_ALIASES).find(
+      ([path]) => pathname === path || pathname.startsWith(`${path}/`),
+    )?.[1] ??
+    ADMIN_MODULES.find(
+      ({ href }) => pathname === href || pathname.startsWith(`${href}/`),
+    )?.id;
+
+  return moduleId ? modulePermission(moduleId, "read") : null;
 }
 
 export function getAccessibleModules(role: AdminRoleId) {
