@@ -113,7 +113,6 @@ export default function Sidebar({ isOpen = true, onClose }: SidebarProps) {
 
   return (
     <>
-      {/* Mobile Backdrop Overlay */}
       {isOpen && (
         <div
           onClick={onClose}
@@ -122,12 +121,10 @@ export default function Sidebar({ isOpen = true, onClose }: SidebarProps) {
         />
       )}
 
-      {/* Sidebar Container: Clean Light Slate bg-[#F1F5F9] / bg-slate-100 with border-r border-slate-200 */}
       <aside
         className={`fixed lg:static inset-y-0 left-0 z-30 w-64 bg-[#F1F5F9] border-r border-slate-200 flex flex-col justify-between shrink-0 transform transition-transform duration-200 ease-in-out ${isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
           } pt-16 lg:pt-0`}
       >
-        {/* Sidebar Header Section */}
         <div className="flex flex-col flex-1 overflow-y-auto px-3 py-4">
           <div className="px-3 mb-2 flex items-center justify-between">
             <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
@@ -138,7 +135,6 @@ export default function Sidebar({ isOpen = true, onClose }: SidebarProps) {
             </span>
           </div>
 
-          {/* Navigation Links */}
           <nav className="space-y-1">
             {navItems.map((item) => {
               const Icon = item.icon;
@@ -160,7 +156,7 @@ export default function Sidebar({ isOpen = true, onClose }: SidebarProps) {
                   <div className="flex items-center gap-3 min-w-0">
                     <Icon
                       className={`h-4 w-4 shrink-0 transition-colors ${isActive
-                          ? "text-[#E5A623]" // Dandelion Yellow active icon
+                          ? "text-[#E5A623]"
                           : "text-slate-500 group-hover:text-[#580011]"
                         }`}
                     />
@@ -188,7 +184,6 @@ export default function Sidebar({ isOpen = true, onClose }: SidebarProps) {
           </nav>
         </div>
 
-        {/* Sidebar Footer System Badge */}
         <div className="p-3 m-3 rounded-xl bg-white/80 border border-slate-200 text-slate-700 shadow-2xs">
           <div className="flex items-center gap-2 mb-1">
             <Sparkles className="h-3.5 w-3.5 text-[#E5A623]" />

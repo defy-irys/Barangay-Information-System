@@ -12,7 +12,8 @@ import {
   FileText, 
   UserPlus, 
   AlertCircle, 
-  PackageCheck
+  PackageCheck,
+  LogIn,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -30,7 +31,6 @@ export default function Navbar({ onToggleSidebar, isSidebarOpen }: NavbarProps) 
     <header className="sticky top-0 z-40 w-full bg-[#580011] text-white shadow-md border-b border-[#3D000C]">
       <div className="flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
         
-        {/* Left Section: Mobile Menu Toggle & Barangay Seal / Branding */}
         <div className="flex items-center gap-3 lg:gap-4">
           <button
             onClick={onToggleSidebar}
@@ -41,16 +41,13 @@ export default function Navbar({ onToggleSidebar, isSidebarOpen }: NavbarProps) 
           </button>
 
           <Link href="/" className="flex items-center gap-3 group focus:outline-none">
-            {/* Barangay Seal Emblem */}
             <div className="relative flex items-center justify-center h-10 w-10 rounded-full bg-gradient-to-br from-[#E5A623] via-amber-400 to-amber-600 p-0.5 shadow-sm group-hover:scale-105 transition-transform">
               <div className="h-full w-full rounded-full bg-[#580011] flex items-center justify-center border border-[#E5A623]/40">
                 <Shield className="h-5 w-5 text-[#E5A623] fill-[#E5A623]/20" />
               </div>
-              {/* Dandelion Yellow Tag Accent Dot */}
               <span className="absolute -top-0.5 -right-0.5 h-3 w-3 rounded-full bg-[#E5A623] ring-2 ring-[#580011]" />
             </div>
 
-            {/* Brand Title & Subtitle */}
             <div className="flex flex-col">
               <div className="flex items-center gap-2">
                 <span className="font-bold tracking-tight text-white text-base sm:text-lg leading-tight">
@@ -67,7 +64,6 @@ export default function Navbar({ onToggleSidebar, isSidebarOpen }: NavbarProps) 
           </Link>
         </div>
 
-        {/* Middle Section: Global Search Bar */}
         <div className="hidden md:flex flex-1 max-w-md mx-6">
           <div className="relative w-full">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-rose-200">
@@ -91,10 +87,8 @@ export default function Navbar({ onToggleSidebar, isSidebarOpen }: NavbarProps) 
           </div>
         </div>
 
-        {/* Right Section: Actions, Notifications & Admin Badge */}
         <div className="flex items-center gap-2 sm:gap-3">
           
-          {/* Quick Action Button & Dropdown */}
           <div className="relative">
             <button
               onClick={() => setShowQuickMenu(!showQuickMenu)}
@@ -105,7 +99,6 @@ export default function Navbar({ onToggleSidebar, isSidebarOpen }: NavbarProps) 
               <ChevronDown className={`h-3.5 w-3.5 transition-transform duration-200 ${showQuickMenu ? 'rotate-180' : ''}`} />
             </button>
 
-            {/* Quick Action Dropdown Menu */}
             {showQuickMenu && (
               <div 
                 className="absolute right-0 mt-2 w-56 rounded-xl bg-white text-slate-900 shadow-xl border border-slate-200 py-2 z-50 animate-in fade-in slide-in-from-top-2 duration-150"
@@ -146,7 +139,6 @@ export default function Navbar({ onToggleSidebar, isSidebarOpen }: NavbarProps) 
             )}
           </div>
 
-          {/* Notification Bell */}
           <div className="relative">
             <button
               onClick={() => setShowNotifications(!showNotifications)}
@@ -160,7 +152,6 @@ export default function Navbar({ onToggleSidebar, isSidebarOpen }: NavbarProps) 
               </span>
             </button>
 
-            {/* Notifications Popover */}
             {showNotifications && (
               <div 
                 className="absolute right-0 mt-2 w-80 rounded-xl bg-white text-slate-900 shadow-xl border border-slate-200 py-2 z-50 animate-in fade-in slide-in-from-top-2 duration-150"
@@ -203,30 +194,13 @@ export default function Navbar({ onToggleSidebar, isSidebarOpen }: NavbarProps) 
             )}
           </div>
 
-          {/* System Administrator Badge */}
-          <div className="flex items-center gap-2.5 pl-2 sm:pl-3 border-l border-[#7A0018]/80">
-            <div className="relative">
-              <div className="h-9 w-9 rounded-full bg-gradient-to-tr from-[#E5A623] to-amber-200 p-0.5 shadow-sm">
-                <div className="h-full w-full rounded-full bg-[#580011] flex items-center justify-center font-bold text-xs text-white">
-                  SA
-                </div>
-              </div>
-              <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full bg-emerald-400 ring-2 ring-[#580011]" />
-            </div>
-            <div className="hidden lg:flex flex-col text-left">
-              <div className="flex items-center gap-1.5">
-                <span className="text-xs font-semibold text-white leading-tight">
-                  System Admin
-                </span>
-                <span className="text-[9px] uppercase tracking-wider font-extrabold bg-[#E5A623] text-slate-950 px-1.5 py-0.2 rounded">
-                  Super Admin
-                </span>
-              </div>
-              <span className="text-[10px] text-rose-200">
-                admin@stalucia.gov.ph
-              </span>
-            </div>
-          </div>
+          <Link
+            href="/login"
+            className="inline-flex items-center gap-2 rounded-lg border border-[#E5A623]/50 px-3 py-2 text-xs font-semibold text-white transition hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-[#E5A623]"
+          >
+            <LogIn className="h-4 w-4 text-[#E5A623]" />
+            <span className="hidden sm:inline">Admin sign in</span>
+          </Link>
 
         </div>
 
