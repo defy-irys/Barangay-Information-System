@@ -1,7 +1,12 @@
 import "server-only";
 import Credentials from "next-auth/providers/credentials";
 import { z } from "zod";
-import { isAdminRoleId, type AdminRoleId } from "./rbac";
+import {
+  normalizeAdminEmail,
+  parseAdminAccount,
+  type AdminAccountRepository,
+} from "@/lib/backend/admin-account";
+import { isAdminRoleId } from "./rbac";
 import { verifyAdminPassword } from "./password-hash";
 
 const credentialsSchema = z.object({
@@ -9,21 +14,8 @@ const credentialsSchema = z.object({
   password: z.string().min(1).max(256),
 });
 
-export interface AdminCredentialAccount {
-  id: string;
-  email: string;
-  name: string;
-  passwordHash: string;
-  role: AdminRoleId;
-  active: boolean;
-}
-
-export interface AdminCredentialRepository {
-  findByEmail(email: string): Promise<AdminCredentialAccount | null>;
-}
-
 export function createAdminCredentialsProvider(
-  repository: AdminCredentialRepository | null,
+  repository: AdminAccountRepository | null,
 ) {
   return Credentials({
     id: "credentials",
@@ -42,12 +34,14 @@ export function createAdminCredentialsProvider(
         return null;
       }
 
-      const email = parsed.data.email.toLowerCase();
-      const account = await repository.findByEmail(email);
+      const email = normalizeAdminEmail(parsed.data.email);
+      const accountRecord = await repository.findByEmail(email);
+      const account = accountRecord ? parseAdminAccount(accountRecord) : null;
       if (
         !account ||
         !account.active ||
         !isAdminRoleId(account.role) ||
+        !account.passwordHash ||
         !(await verifyAdminPassword(parsed.data.password, account.passwordHash))
       ) {
         return null;
