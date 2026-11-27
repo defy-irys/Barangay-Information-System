@@ -60,10 +60,20 @@ The backend foundation currently provides:
 - API response and request-validation helpers.
 - `GET /api/v1/health`, a public liveness check.
 - `GET /api/v1/auth/capabilities`, which reports whether sign-in configuration is present.
+- Quarter 4 resident API contracts for listing, creating, reading, and updating resident records.
 
-The database vendor and hosted DaaS are not yet selected. `DATABASE_URL` is a configuration placeholder; no database driver or migration runner is connected, and application data is not yet persisted. Quarter 3 adds the provider-neutral administrator data model and initial schema at `db/migrations/0001_admin_accounts.sql`. Review and apply/adapt that migration for the selected DaaS before using it. Email/password sign-in remains disabled until a database-backed account repository is connected. Existing module screens still use frontend/mock state and should not be treated as persistent records.
+The database vendor and hosted DaaS are not yet selected. `DATABASE_URL` is a configuration placeholder; no database driver or migration runner is connected, and application data is not yet persisted. The provider-neutral schema is in `db/migrations/0001_admin_accounts.sql` and `db/migrations/0002_residents.sql`. Review and apply/adapt both migrations for the selected DaaS before using them. The resident API routes enforce session-derived RBAC and validate input, but return `503 SERVICE_UNAVAILABLE` until a persistent database adapter is connected. No in-memory or mock storage is used as a fallback. Email/password sign-in remains disabled until a database-backed account repository is connected. Existing module screens still use frontend/mock state and are not yet wired to these routes.
 
-The initial schema defines administrator accounts and security audit events. IDs and UTC epoch-millisecond timestamps are supplied by the application. Audit-event details must be minimized and must not contain passwords, tokens, or unnecessary personal/sensitive information. No administrator accounts are seeded by the migration.
+The schema defines administrator accounts, security audit events, and the resident registry. IDs and UTC epoch-millisecond timestamps are supplied by the application. The resident schema intentionally excludes national identity numbers, health details, religion, voter data, photos, and sectoral/sensitive case records. Audit-event details must be minimized and must not contain passwords, tokens, or unnecessary personal/sensitive information. No administrator accounts or residents are seeded by the migrations.
+
+The resident API contract is:
+
+- `GET /api/v1/residents?search=...&limit=25&offset=0` — requires `inhabitants:read`; page size is capped at 100.
+- `POST /api/v1/residents` — requires `inhabitants:create`; validates the submitted resident profile.
+- `GET /api/v1/residents/{id}` — requires `inhabitants:read`.
+- `PATCH /api/v1/residents/{id}` — requires `inhabitants:update`; requires at least one valid field.
+
+All routes require an authenticated administrator session. Create/update repository operations must write their corresponding security audit event atomically when the database adapter is implemented. Until then, these routes return `503 SERVICE_UNAVAILABLE`; they never report success or fall back to process-local data.
 
 ## Validation and production build
 

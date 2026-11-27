@@ -4,7 +4,8 @@ export type ApiErrorCode =
   | "UNAUTHENTICATED"
   | "FORBIDDEN"
   | "NOT_FOUND"
-  | "CONFLICT";
+  | "CONFLICT"
+  | "SERVICE_UNAVAILABLE";
 
 export interface ApiValidationIssue {
   path: (string | number)[];
