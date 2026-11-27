@@ -16,6 +16,7 @@ import {
   Shield,
 } from "lucide-react";
 import { ADMIN_PROFILES, hasPermission, isAdminRoleId } from "@/lib/auth/rbac";
+import { isBarangayScopeIds } from "@/lib/auth/access-attributes";
 import {
   BlotterIntakeForm,
   BlotterCaseData,
@@ -33,7 +34,10 @@ export default function HelpdeskBlotterPage() {
     "intake" | "case" | "tracking" | "summons" | "action" | "vawc" | "feedback"
   >("intake");
   const role = session?.user?.role;
-  const vawcAccess = isAdminRoleId(role) && hasPermission(role, "vawc:read");
+  const vawcAccess =
+    isAdminRoleId(role) &&
+    hasPermission(role, "vawc:read") &&
+    isBarangayScopeIds(session?.user?.barangayScopeIds);
 
   const [cases, setCases] = useState<BlotterCaseData[]>([
     {

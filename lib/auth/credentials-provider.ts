@@ -52,6 +52,7 @@ export function createAdminCredentialsProvider(
         name: account.name,
         email: account.email,
         role: account.role,
+        barangayScopeIds: account.barangayScopeIds,
       };
     },
   });

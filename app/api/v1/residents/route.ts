@@ -4,7 +4,10 @@ import {
   apiSuccessResponse,
 } from "@/lib/backend/api-error";
 import { parseJsonBody } from "@/lib/backend/request-validation";
-import { requireCurrentPermission } from "@/lib/auth/authorization";
+import {
+  requireCurrentPermission,
+  requireResourcePermission,
+} from "@/lib/auth/authorization";
 import {
   residentCreateSchema,
   parseResidentListQuery,
@@ -14,14 +17,23 @@ import { getResidentRepository } from "@/lib/residents/repository";
 
 export async function GET(request: Request): Promise<Response> {
   try {
-    await requireCurrentPermission("inhabitants:read");
+    const principal = await requireCurrentPermission("inhabitants:read");
     const url = new URL(request.url);
     const query = parseResidentListQuery({
       search: url.searchParams.get("search") ?? undefined,
       limit: url.searchParams.get("limit") ?? undefined,
       offset: url.searchParams.get("offset") ?? undefined,
     });
-    const page = await getResidentRepository().list(query);
+    const page = await getResidentRepository().list(
+      query,
+      principal.attributes.barangayScopeIds,
+    );
+    for (const resident of page.items) {
+      requireResourcePermission(principal, "inhabitants:read", {
+        barangayScopeId: resident.barangayScopeId,
+        classification: "confidential",
+      });
+    }
 
     return apiSuccessResponse(page);
   } catch (error) {
@@ -33,6 +45,10 @@ export async function POST(request: Request): Promise<Response> {
   try {
     const principal = await requireCurrentPermission("inhabitants:create");
     const input = await parseJsonBody(request, residentCreateSchema);
+    requireResourcePermission(principal, "inhabitants:create", {
+      barangayScopeId: input.barangayScopeId,
+      classification: "confidential",
+    });
     const now = Date.now();
     const year = new Date(now).getUTCFullYear();
     const residentSuffix = randomUUID()
@@ -43,6 +59,7 @@ export async function POST(request: Request): Promise<Response> {
       ...input,
       id: randomUUID(),
       residentNumber: `RES-${year}-${residentSuffix}`,
+      barangayScopeId: input.barangayScopeId.toLowerCase(),
       middleName: input.middleName || null,
       extensionName: input.extensionName || null,
       subdivision: input.subdivision || null,

@@ -5,6 +5,7 @@ const optionalContact = z.string().trim().max(254).nullable().optional();
 
 export const residentCreateSchema = z.strictObject({
   firstName: z.string().trim().min(1).max(100),
+  barangayScopeId: z.string().uuid(),
   middleName: z.string().trim().max(100).nullable().optional(),
   lastName: z.string().trim().min(1).max(100),
   extensionName: z.string().trim().max(20).nullable().optional(),
@@ -29,6 +30,7 @@ export const residentCreateSchema = z.strictObject({
 });
 
 export const residentUpdateSchema = residentCreateSchema
+  .omit({ barangayScopeId: true })
   .partial()
   .refine((value) => Object.keys(value).length > 0, {
     message: "At least one field must be provided.",
@@ -45,6 +47,7 @@ export const residentIdSchema = z.string().uuid();
 export interface ResidentRecord {
   id: string;
   residentNumber: string;
+  barangayScopeId: string;
   firstName: string;
   middleName: string | null;
   lastName: string;
@@ -75,9 +78,17 @@ export interface ResidentPage {
 }
 
 export interface ResidentRepository {
-  list(query: ResidentListQuery): Promise<ResidentPage>;
-  findById(id: string): Promise<ResidentRecord | null>;
-  /** Persist the record and resident.created audit event in one transaction. */
+  /** Apply scope and archived-record filters in the database query before returning rows. */
+  list(
+    query: ResidentListQuery,
+    allowedScopeIds: readonly string[],
+  ): Promise<ResidentPage>;
+  /** Return null for records outside the supplied scopes. */
+  findById(
+    id: string,
+    allowedScopeIds: readonly string[],
+  ): Promise<ResidentRecord | null>;
+  /** Verify scope membership; atomically persist the record and audit event. */
   create(
     record: ResidentRecord,
     actorUserId: string,
@@ -86,6 +97,7 @@ export interface ResidentRepository {
   update(
     id: string,
     changes: ResidentUpdateInput,
+    allowedScopeIds: readonly string[],
     actorUserId: string,
     updatedAtMs: number,
   ): Promise<ResidentRecord | null>;

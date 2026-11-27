@@ -1,6 +1,7 @@
 import "server-only";
 import { z } from "zod";
 import { ADMIN_ROLE_IDS } from "@/lib/auth/rbac";
+import { normalizeBarangayScopeIds } from "@/lib/auth/access-attributes";
 
 const adminAccountSchema = z.object({
   id: z.string().uuid(),
@@ -12,6 +13,7 @@ const adminAccountSchema = z.object({
   name: z.string().trim().min(1).max(120),
   passwordHash: z.string().max(255).nullable(),
   role: z.enum(ADMIN_ROLE_IDS),
+  barangayScopeIds: z.array(z.string().uuid()).min(1).max(100),
   active: z.boolean(),
   createdAtMs: z.number().int().nonnegative().refine(Number.isSafeInteger),
   updatedAtMs: z.number().int().nonnegative().refine(Number.isSafeInteger),
@@ -24,6 +26,7 @@ const adminAccountRowSchema = z
     display_name: z.string(),
     password_hash: z.string().nullable(),
     role: z.string(),
+    barangay_scope_ids: z.array(z.string().uuid()),
     is_active: z.union([z.boolean(), z.literal(0), z.literal(1)]),
     created_at_ms: z.coerce.number().int().nonnegative(),
     updated_at_ms: z.coerce.number().int().nonnegative(),
@@ -34,6 +37,7 @@ const adminAccountRowSchema = z
     name: row.display_name,
     passwordHash: row.password_hash,
     role: row.role,
+    barangayScopeIds: normalizeBarangayScopeIds(row.barangay_scope_ids) ?? [],
     active: Boolean(row.is_active),
     createdAtMs: row.created_at_ms,
     updatedAtMs: row.updated_at_ms,

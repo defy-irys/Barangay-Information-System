@@ -1,6 +1,7 @@
 import NextAuth from "next-auth";
 import type { OIDCConfig } from "next-auth/providers";
 import { NextResponse } from "next/server";
+import { normalizeBarangayScopeIds } from "@/lib/auth/access-attributes";
 import { createAdminCredentialsProvider } from "@/lib/auth/credentials-provider";
 import {
   getModuleReadPermissionForPath,
@@ -45,8 +46,12 @@ function getOidcProvider(): OIDCConfig<AdminOidcProfile> | null {
   }
 
   const roleClaim = process.env.AUTH_OIDC_ROLE_CLAIM || "role";
-  if (!/^[A-Za-z0-9._-]+$/.test(roleClaim)) {
-    throw new Error("AUTH_OIDC_ROLE_CLAIM must be a single claim name.");
+  const scopeClaim = process.env.AUTH_OIDC_SCOPE_CLAIM || "barangay_scope_ids";
+  if (
+    !/^[A-Za-z0-9._-]+$/.test(roleClaim) ||
+    !/^[A-Za-z0-9._-]+$/.test(scopeClaim)
+  ) {
+    throw new Error("OIDC role and barangay scope claims must be single claim names.");
   }
 
   return {
@@ -65,6 +70,7 @@ function getOidcProvider(): OIDCConfig<AdminOidcProfile> | null {
         email: typeof profile.email === "string" ? profile.email : undefined,
         image: typeof profile.picture === "string" ? profile.picture : undefined,
         role: isAdminRoleId(claim) ? claim : undefined,
+        barangayScopeIds: normalizeBarangayScopeIds(profile[scopeClaim]) ?? undefined,
       };
     },
   };
@@ -91,16 +97,25 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   session: { strategy: "jwt", maxAge: 60 * 60 },
   callbacks: {
     signIn({ user }) {
-      return Boolean(user.id && isAdminRoleId(user.role));
+      return Boolean(
+        user.id &&
+          isAdminRoleId(user.role) &&
+          normalizeBarangayScopeIds(user.barangayScopeIds),
+      );
     },
     jwt({ token, user }) {
       if (user) {
-        if (user.id && isAdminRoleId(user.role)) {
+        const barangayScopeIds = normalizeBarangayScopeIds(
+          user.barangayScopeIds,
+        );
+        if (user.id && isAdminRoleId(user.role) && barangayScopeIds) {
           token.sub = user.id;
           token.role = user.role;
+          token.barangayScopeIds = barangayScopeIds;
         } else {
           delete token.sub;
           delete token.role;
+          delete token.barangayScopeIds;
         }
       }
       return token;
@@ -115,6 +130,14 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         } else {
           delete session.user.role;
         }
+        const barangayScopeIds = normalizeBarangayScopeIds(
+          token.barangayScopeIds,
+        );
+        if (barangayScopeIds) {
+          session.user.barangayScopeIds = barangayScopeIds;
+        } else {
+          delete session.user.barangayScopeIds;
+        }
       }
       return session;
     },
@@ -126,7 +149,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
       const user = session?.user;
       const role = user?.role;
-      if (!user?.id || !isAdminRoleId(role)) {
+      if (
+        !user?.id ||
+        !isAdminRoleId(role) ||
+        !normalizeBarangayScopeIds(user.barangayScopeIds)
+      ) {
         if (pathname.startsWith("/api/")) {
           return Response.json(
             { error: { code: "UNAUTHENTICATED", message: "Sign-in is required." } },

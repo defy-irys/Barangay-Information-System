@@ -154,7 +154,7 @@ export default function AdminLoginPage() {
                 </p>
               </div>
               <span className="rounded-full bg-amber-50 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-amber-800">
-                Draft RBAC
+                Draft HBAC
               </span>
             </div>
 
