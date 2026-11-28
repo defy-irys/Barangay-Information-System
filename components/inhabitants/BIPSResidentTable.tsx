@@ -1,24 +1,18 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
-import Link from "next/link";
 import {
   Search,
-  Filter,
   Users,
   UserCheck,
   Award,
   HeartHandshake,
-  MoreVertical,
   Eye,
   Edit,
   Trash2,
   ChevronLeft,
   ChevronRight,
-  ShieldCheck,
   CheckCircle2,
-  XCircle,
-  FileSpreadsheet,
   Plus,
   X,
 } from "lucide-react";
@@ -43,8 +37,6 @@ export default function BIPSResidentTable({
   const [voterFilter, setVoterFilter] = useState("All");
   const [categoryFilter, setCategoryFilter] = useState("All"); // Senior, PWD, SoloParent, Indigent
   const [selectedResident, setSelectedResident] = useState<Resident | null>(null);
-  const [actionMenuOpenId, setActionMenuOpenId] = useState<string | null>(null);
-
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 8;
@@ -199,12 +191,13 @@ export default function BIPSResidentTable({
           </div>
 
           {/* Action Trigger Button */}
-          <Link
-            href="/inhabitants/citizens/create"
+          <button
+            type="button"
+            onClick={onAddNewClick}
             className="px-4 py-2 bg-[#E5A623] hover:bg-amber-400 text-slate-950 text-xs font-bold rounded-lg shadow-xs transition-colors flex items-center justify-center gap-2 shrink-0"
           >
             <Plus className="h-4 w-4" /> Register New Citizen
-          </Link>
+          </button>
         </div>
 
         {/* Dropdown Filters */}

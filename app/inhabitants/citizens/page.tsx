@@ -75,7 +75,10 @@ export default function CitizensPage() {
   };
 
   return (
-    <BIPSModuleShell activeTab="citizens">
+    <BIPSModuleShell
+      activeTab="citizens"
+      onRegisterResident={handleAddNew}
+    >
       <BIPSResidentTable
         residents={residents}
         onEditResident={handleEdit}

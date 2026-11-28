@@ -2,12 +2,10 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
   ChevronRight,
   ChevronLeft,
-  CheckCircle2,
   User,
   Phone,
   ShieldCheck,
@@ -15,7 +13,6 @@ import {
   Camera,
   Upload,
   AlertCircle,
-  Sparkles,
   Check,
 } from "lucide-react";
 
@@ -136,13 +133,11 @@ const SECTOR_OPTIONS = [
 ];
 
 export default function CitizenCreateWizard() {
-  const router = useRouter();
   const [currentStep, setCurrentStep] = useState<number>(1);
   const [formData, setFormData] = useState<CitizenFormData>(INITIAL_FORM);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
-  const [isSubmitted, setIsSubmitted] = useState<boolean>(false);
+  const [submissionError, setSubmissionError] = useState("");
 
   // Age calculation helper
   const calculateAge = (dob: string): number => {
@@ -174,8 +169,12 @@ export default function CitizenCreateWizard() {
     });
   };
 
-  const handleChange = (field: keyof CitizenFormData, value: any) => {
+  const handleChange = (
+    field: keyof CitizenFormData,
+    value: CitizenFormData[keyof CitizenFormData],
+  ) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
+    setSubmissionError("");
     if (errors[field]) {
       setErrors((prev) => ({ ...prev, [field]: "" }));
     }
@@ -263,11 +262,9 @@ export default function CitizenCreateWizard() {
     e.preventDefault();
     if (!validateStep(currentStep)) return;
 
-    setIsSubmitting(true);
-    setTimeout(() => {
-      setIsSubmitting(false);
-      setIsSubmitted(true);
-    }, 1200);
+    setSubmissionError(
+      "Resident storage is not configured. No record has been saved.",
+    );
   };
 
   const steps = [
@@ -277,49 +274,6 @@ export default function CitizenCreateWizard() {
     { number: 4, label: "Sectoral Info", icon: Award },
     { number: 5, label: "Profile Photo", icon: Camera },
   ];
-
-  if (isSubmitted) {
-    return (
-      <div className="bg-white rounded-xl border border-slate-200 p-8 shadow-sm text-center max-w-2xl mx-auto my-8 space-y-5">
-        <div className="h-16 w-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto">
-          <CheckCircle2 className="h-10 w-10" />
-        </div>
-        <div>
-          <h2 className="text-xl font-bold text-slate-900">Citizen Registration Completed!</h2>
-          <p className="text-xs text-slate-500 max-w-md mx-auto mt-1">
-            Resident record for <strong>{formData.firstName} {formData.middleName} {formData.lastName} {formData.extensionName}</strong> has been successfully registered under Barangay Sta. Lucia BIPS database.
-          </p>
-        </div>
-
-        <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 text-left text-xs space-y-2 max-w-md mx-auto font-mono">
-          <div>• System Control ID: RES-2026-{Math.floor(Math.random() * 9000 + 1000)}</div>
-          <div>• Full Address: {formData.houseLotNo} {formData.street}, {formData.barangay}</div>
-          <div>• Sectoral Flags: {formData.sectors.join(", ") || "None"}</div>
-          <div>• Registered Voter: {formData.isRegisteredResidentVoter ? "Yes (Resident)" : "No"}</div>
-        </div>
-
-        <div className="flex items-center justify-center gap-3 pt-3">
-          <button
-            onClick={() => {
-              setIsSubmitted(false);
-              setCurrentStep(1);
-              setFormData(INITIAL_FORM);
-              setPhotoPreview(null);
-            }}
-            className="px-4 py-2 text-xs font-semibold rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-100"
-          >
-            Register Another Citizen
-          </button>
-          <Link
-            href="/inhabitants/citizens"
-            className="px-5 py-2 text-xs font-bold rounded-lg bg-[#580011] text-white hover:bg-[#7A0018] transition-colors shadow-sm"
-          >
-            Back to Citizens Directory
-          </Link>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-6">
@@ -371,8 +325,6 @@ export default function CitizenCreateWizard() {
           {steps.map((step) => {
             const isCompleted = currentStep > step.number;
             const isActive = currentStep === step.number;
-            const Icon = step.icon;
-
             return (
               <div key={step.number} className="relative z-10 flex flex-col items-center group">
                 <button
@@ -405,6 +357,23 @@ export default function CitizenCreateWizard() {
 
       {/* MAIN STEP FORM CONTAINER */}
       <form onSubmit={handleSubmit} className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+        <div
+          role="status"
+          className="flex items-center gap-2 border-b border-amber-200 bg-amber-50 px-6 py-3 text-xs text-amber-900"
+        >
+          <AlertCircle className="h-4 w-4 shrink-0" />
+          Resident storage is not configured. Do not enter real personal data;
+          this form cannot save submissions.
+        </div>
+        {submissionError && (
+          <div
+            role="alert"
+            className="flex items-center gap-2 border-b border-amber-200 bg-amber-50 px-6 py-3 text-xs text-amber-900"
+          >
+            <AlertCircle className="h-4 w-4 shrink-0" />
+            {submissionError}
+          </div>
+        )}
         {/* Step Title Header */}
         <div className="bg-[#580011] text-white p-4 px-6 flex items-center justify-between border-b border-[#7A0018]">
           <div className="flex items-center gap-2">
@@ -939,7 +908,7 @@ export default function CitizenCreateWizard() {
 
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 mb-1">
-                    Mother's Maiden Name <span className="text-rose-600">*</span>
+                    Mother&apos;s Maiden Name <span className="text-rose-600">*</span>
                   </label>
                   <input
                     type="text"
@@ -1124,10 +1093,9 @@ export default function CitizenCreateWizard() {
             ) : (
               <button
                 type="submit"
-                disabled={isSubmitting}
                 className="px-6 py-2.5 text-xs font-bold rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white transition-colors shadow-md flex items-center gap-2"
               >
-                {isSubmitting ? "Submitting Registration..." : "Submit Registration"}
+                Submit Registration
               </button>
             )}
           </div>

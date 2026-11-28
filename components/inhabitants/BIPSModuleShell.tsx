@@ -1,59 +1,22 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Users, Home, BarChart3, Plus, ArrowLeft, ShieldCheck, Sparkles } from "lucide-react";
-import ResidentRegistrationModal from "./ResidentRegistrationModal";
-import { Resident, Household } from "@/types/inhabitants";
-import { INITIAL_RESIDENTS, INITIAL_HOUSEHOLDS } from "./mockData";
+import { Users, Home, BarChart3, Plus, ArrowLeft } from "lucide-react";
 
 interface BIPSModuleShellProps {
   children: React.ReactNode;
   activeTab?: "citizens" | "households" | "demographics";
+  onRegisterResident?: () => void;
 }
 
-export default function BIPSModuleShell({ children, activeTab }: BIPSModuleShellProps) {
+export default function BIPSModuleShell({
+  children,
+  activeTab,
+  onRegisterResident,
+}: BIPSModuleShellProps) {
   const pathname = usePathname();
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [residentList, setResidentList] = useState<Resident[]>(INITIAL_RESIDENTS);
-
-  const handleSaveResident = (newResidentData: Partial<Resident>) => {
-    const newResident: Resident = {
-      id: `RES-2026-00${residentList.length + 1}`,
-      firstName: newResidentData.firstName || "",
-      lastName: newResidentData.lastName || "",
-      middleName: newResidentData.middleName || "",
-      suffix: newResidentData.suffix || "",
-      gender: newResidentData.gender || "Male",
-      birthDate: newResidentData.birthDate || "1990-01-01",
-      age: newResidentData.age || 30,
-      civilStatus: newResidentData.civilStatus || "Single",
-      contactNumber: newResidentData.contactNumber || "",
-      email: newResidentData.email || "",
-      address: newResidentData.address || "Brgy. Sta. Lucia, Quezon City",
-      street: newResidentData.street || "Sta. Lucia St.",
-      householdId: newResidentData.householdId || "HH-STL-0101",
-      isHeadOfHousehold: newResidentData.isHeadOfHousehold || false,
-      relationshipToHead: newResidentData.relationshipToHead || "Head",
-      voterStatus: newResidentData.voterStatus || "Registered",
-      precinctNo: newResidentData.precinctNo || "",
-      occupation: newResidentData.occupation || "Employed",
-      educationalAttainment: newResidentData.educationalAttainment || "College",
-      isPwd: newResidentData.isPwd || false,
-      pwdType: newResidentData.pwdType || "",
-      isSenior: newResidentData.isSenior || false,
-      isSoloParent: newResidentData.isSoloParent || false,
-      isIndigent: newResidentData.isIndigent || false,
-      status: "Active",
-      emergencyContactName: newResidentData.emergencyContactName || "",
-      emergencyContactPhone: newResidentData.emergencyContactPhone || "",
-      emergencyContactRelation: newResidentData.emergencyContactRelation || "",
-      dateRegistered: new Date().toISOString().split("T")[0],
-    };
-
-    setResidentList((prev) => [newResident, ...prev]);
-  };
 
   // Determine current active tab based on pathname or prop
   const currentTab =
@@ -96,15 +59,15 @@ export default function BIPSModuleShell({ children, activeTab }: BIPSModuleShell
           </div>
         </div>
 
-        {/* Global Modal Action Trigger */}
-        <div className="flex items-center gap-2">
+        {onRegisterResident && (
           <button
-            onClick={() => setIsModalOpen(true)}
+            type="button"
+            onClick={onRegisterResident}
             className="px-4 py-2.5 rounded-lg bg-[#E5A623] hover:bg-amber-400 text-slate-950 text-xs font-bold shadow-sm transition-all flex items-center gap-2"
           >
             <Plus className="h-4 w-4" /> Register New Resident
           </button>
-        </div>
+        )}
       </div>
 
       {/* Primary Sub-System Navigation Tabs */}
@@ -148,13 +111,6 @@ export default function BIPSModuleShell({ children, activeTab }: BIPSModuleShell
 
       {/* Main Mount View Area */}
       <div>{children}</div>
-
-      {/* Shared Registration Modal */}
-      <ResidentRegistrationModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        onSave={handleSaveResident}
-      />
     </div>
   );
 }

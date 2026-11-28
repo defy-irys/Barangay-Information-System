@@ -9,6 +9,7 @@ import {
   AlignRight, Paperclip, File as FileIcon, AlertCircle, CheckCircle2,
   Loader2, LucideIcon,
 } from "lucide-react";
+import { sanitizeIssuanceContent } from "@/lib/ordinances/sanitize-content";
 
 /* =========================================================================
    TYPES
@@ -424,7 +425,7 @@ function ContentEditor({
 
   useEffect(() => {
     if (ref.current && !initialized.current) {
-      ref.current.innerHTML = value || "";
+      ref.current.innerHTML = sanitizeIssuanceContent(value || "");
       initialized.current = true;
     }
   }, [value]);
@@ -432,7 +433,9 @@ function ContentEditor({
   const exec = (cmd: string, arg?: string) => {
     ref.current?.focus();
     document.execCommand(cmd, false, arg);
-    if (ref.current) onChange(ref.current.innerHTML);
+    if (ref.current) {
+      onChange(sanitizeIssuanceContent(ref.current.innerHTML));
+    }
   };
 
   const toolbarBtns: ({ sep: true } | ToolbarButton)[] = [
@@ -474,7 +477,13 @@ function ContentEditor({
           className="min-h-[240px] px-4 py-3.5 text-[13.8px] leading-relaxed outline-none bg-white empty:before:content-[attr(data-placeholder)] empty:before:text-slate-400"
           contentEditable
           data-placeholder={placeholder}
-          onInput={(e) => onChange((e.currentTarget as HTMLDivElement).innerHTML)}
+          onInput={(e) =>
+            onChange(
+              sanitizeIssuanceContent(
+                (e.currentTarget as HTMLDivElement).innerHTML,
+              ),
+            )
+          }
           suppressContentEditableWarning
         />
       </div>
@@ -684,7 +693,11 @@ function IssuanceForm({
     if (asDraft) setSavingDraft(true);
     else setSaving(true);
     try {
-      const payload = { ...form, status: (asDraft ? "draft" : "published") as IssuanceStatus };
+      const payload = {
+        ...form,
+        content: sanitizeIssuanceContent(form.content),
+        status: (asDraft ? "draft" : "published") as IssuanceStatus,
+      };
       const saved = mode === "edit" && initial ? await IssuanceService.updateIssuance(initial.id, payload) : await IssuanceService.createIssuance(payload);
       toasts.push(asDraft ? "Draft saved." : "Issuance saved.", "success");
       onSaved(saved);
@@ -1023,7 +1036,12 @@ function IssuanceDetails({ id, onBack, onEdit, toasts }: { id: string; onBack: (
       </Card>
 
       <Card title="Content">
-        <div className="prose prose-sm max-w-none text-slate-800" dangerouslySetInnerHTML={{ __html: item.content }} />
+        <div
+          className="prose prose-sm max-w-none text-slate-800"
+          dangerouslySetInnerHTML={{
+            __html: sanitizeIssuanceContent(item.content),
+          }}
+        />
       </Card>
 
       <Card title="Narrative report">

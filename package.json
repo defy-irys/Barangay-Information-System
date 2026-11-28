@@ -7,9 +7,10 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "tsx --test tests/auth-authorization.test.ts tests/resident-validation.test.ts"
+    "test": "tsx --test tests/auth-authorization.test.ts tests/resident-validation.test.ts tests/ordinance-content-sanitization.test.ts"
   },
   "dependencies": {
+    "isomorphic-dompurify": "^4.9.0",
     "lucide-react": "^1.33.0",
     "next": "16.4.6",
     "next-auth": "5.0.0-beta.32",
