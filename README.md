@@ -44,8 +44,9 @@ Authentication is fail-closed until configured. To enable organization SSO, set 
 - `AUTH_OIDC_CLIENT_ID`
 - `AUTH_OIDC_CLIENT_SECRET`
 - `AUTH_OIDC_ROLE_CLAIM` (defaults to `role`)
+- `AUTH_OIDC_SCOPE_CLAIM` (defaults to `barangay_scope_ids`; must return assigned scope UUIDs)
 
-The role claim must exactly match an approved role ID in `lib/auth/rbac.ts`. Register the callback URL `/api/auth/callback/barangay-oidc` with the provider. Email/password sign-in remains disabled until its account repository is connected to the selected database. Never commit `.env.local`, real secrets, or production credentials.
+The role claim must exactly match an approved role ID in `lib/auth/rbac.ts`. The scope claim must contain one or more valid UUIDs assigned to that user. Register the callback URL `/api/auth/callback/barangay-oidc` with the provider. Email/password sign-in remains disabled until its account repository is connected to the selected database. Never commit `.env.local`, real secrets, or production credentials.
 
 Only set `AUTH_TRUST_HOST=true` in production when the trusted reverse proxy validates and overwrites incoming `Host` headers. Local development does not require this setting.
 
@@ -87,13 +88,19 @@ Run the production build:
 npm run build
 ```
 
+Run the backend regression tests:
+
+```powershell
+npm test
+```
+
 Run ESLint:
 
 ```powershell
 npm run lint
 ```
 
-The repository currently has no dedicated automated test script. For a production-mode local check, build first and then run:
+The automated tests cover hybrid authorization and resident input/pagination validation. They do not replace database-provider integration tests; no database adapter is connected yet. For a production-mode local check, build first and then run:
 
 ```powershell
 npm run start
